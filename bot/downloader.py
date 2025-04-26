@@ -15,16 +15,16 @@ async def search_and_download(query):
     'outtmpl': 'downloads/%(title)s.%(ext)s',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'opus',
-        'preferredquality': '64',
+        'preferredcodec': 'mp3',
+        'preferredquality': '128',
     }],
     'retries': 3,
     'nocheckcertificate': True,
-    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',  # Pretend to be a browser
     'geo_bypass': True,
-    'source_address': '0.0.0.0',  # For IPv6 issues sometimes
-    'ffmpeg_location': '/usr/bin/ffmpeg'
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    'cookiefile': 'bot/utils/youtube_cookies.txt',
 }
+
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
