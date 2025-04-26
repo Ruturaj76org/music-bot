@@ -8,17 +8,23 @@ import logging
 async def search_and_download(query):
     """Search and download the first result from YouTube Music."""
     ydl_opts = {
-        'format': 'bestaudio/best',
-        'noplaylist': True,
-        'quiet': True,
-        'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'opus',
-            'preferredquality': '64',  # Keeps it under 5MB
-        }],
-        'ffmpeg_location': '/usr/bin/ffmpeg',
-    }
+    'format': 'bestaudio/best',
+    'noplaylist': True,
+    'quiet': True,
+    'default_search': 'ytsearch1',
+    'outtmpl': 'downloads/%(title)s.%(ext)s',
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'opus',
+        'preferredquality': '64',
+    }],
+    'retries': 3,
+    'nocheckcertificate': True,
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',  # Pretend to be a browser
+    'geo_bypass': True,
+    'source_address': '0.0.0.0',  # For IPv6 issues sometimes
+    'ffmpeg_location': '/usr/bin/ffmpeg'
+}
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
