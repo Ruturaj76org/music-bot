@@ -1,30 +1,45 @@
+# bot/downloader.py
+
 import yt_dlp
-import ffmpeg
+import os
 from io import BytesIO
+import logging
 
 async def search_and_download(query):
+    """Search and download the first result from YouTube Music."""
     ydl_opts = {
         'format': 'bestaudio/best',
+        'noplaylist': True,
+        'quiet': True,
+        'outtmpl': 'downloads/%(title)s.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
+            'preferredcodec': 'opus',
+            'preferredquality': '64',  # Keeps it under 5MB
         }],
-        'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'quiet': True
+        'ffmpeg_location': '/usr/bin/ffmpeg',
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(f"ytsearch:{query}", download=False)
-        if 'entries' in info:
-            video = info['entries'][0]
-            audio_file = ydl.prepare_filename(video)
-            ffmpeg.input(audio_file).output('output.ogg').run()
-            with open('output.ogg', 'rb') as f:
-                audio_data = BytesIO(f.read())
-            return {
-                'file': audio_data,
-                'title': video['title'],
-                'artist': video['uploader']
-            }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"ytsearch1:{query}", download=True)
+            if 'entries' in info:
+                video = info['entries'][0]
+                title = video['title']
+                artist = video.get('uploader', 'Unknown Artist')
+                thumbnail_url = video.get('thumbnail', '')
+                # Prepare file to send
+                audio_file_path = ydl.prepare_filename(video).replace(".webm", ".ogg").replace(".m4a", ".ogg")
+                with open(audio_file_path, 'rb') as audio_file:
+                    audio_data = BytesIO(audio_file.read())
+                os.remove(audio_file_path)  # Clean up the file
+                return {
+                    'file': audio_data,
+                    'title': title,
+                    'artist': artist,
+                    'thumbnail': thumbnail_url
+                }
+    except Exception as e:
+        logging.error(f"Error while downloading: {e}")
     return None
+
