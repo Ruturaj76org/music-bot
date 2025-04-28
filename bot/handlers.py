@@ -1,5 +1,3 @@
-# bot/handlers.py
-
 from telegram import Update
 from telegram.ext import CallbackContext
 from .downloader import search_and_download
@@ -15,13 +13,12 @@ async def start(update: Update, context: CallbackContext):
 async def handle_search(update: Update, context: CallbackContext):
     """Handle song name input, fetch details, and show response."""
     query = update.message.text
-    # Show fetching message
     await update.message.reply_text(STATUS_MESSAGES["fetching_details"])
 
-    # Fetch the song details
     result = await search_and_download(query)
     if result:
-        # Build the message with song details and send
+        context.user_data['song_data'] = result  # <-- Store song for later use
+
         message_data = build_message(
             result['title'],
             result['artist'],
@@ -29,13 +26,14 @@ async def handle_search(update: Update, context: CallbackContext):
             STATUS_MESSAGES["song_found"],
             BUTTONS
         )
+
         await update.message.reply_photo(
             photo=message_data['photo'],
             caption=message_data['caption'],
-            reply_markup=message_data['reply_markup']
+            reply_markup=message_data['reply_markup'],
+            parse_mode="Markdown"  # <-- Enable markdown for bold title
         )
     else:
-        # Inform the user if the song was not found
         await update.message.reply_text(STATUS_MESSAGES["song_not_found"])
 
 async def button_callback(update: Update, context: CallbackContext):
@@ -44,7 +42,6 @@ async def button_callback(update: Update, context: CallbackContext):
     data = query.data
 
     if data == "get_song":
-        # Handle file sending if user chooses to download the song
         song_data = context.user_data.get('song_data')
         if song_data:
             await query.message.reply_audio(
@@ -53,7 +50,6 @@ async def button_callback(update: Update, context: CallbackContext):
             )
         else:
             await query.message.reply_text("No song data available.")
-    
+
     elif data == "not_found":
-        # User indicates the song wasn't found, ask for more info
         await query.message.reply_text("Can you give me more details? Try including artist or album.")
